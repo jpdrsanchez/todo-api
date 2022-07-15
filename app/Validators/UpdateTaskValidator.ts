@@ -26,6 +26,7 @@ export default class UpdateTaskValidator {
   public schema = schema.create({
     title: schema.string.nullableAndOptional({ trim: true }, [rules.minLength(2)]),
     order: schema.number.nullableAndOptional([rules.unsigned()]),
+    status: schema.string.nullableAndOptional({}, [rules.regex(/todo|done/i)]),
   })
 
   /**
@@ -42,5 +43,6 @@ export default class UpdateTaskValidator {
   public messages: CustomMessages = {
     minLength: 'The {{field}} field must be at least {{options.minLength}} characters long',
     unsigned: 'the number cannot be negative',
+    regex: 'The {{field}} must be TODO or DONE',
   }
 }

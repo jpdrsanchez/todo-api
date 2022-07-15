@@ -61,6 +61,11 @@ export default class TasksController {
         .decrement('order', 1)
     }
 
+    if (inputs.status) {
+      task.status = inputs.status
+      await task.save()
+    }
+
     return ctx.response.noContent()
   }
 

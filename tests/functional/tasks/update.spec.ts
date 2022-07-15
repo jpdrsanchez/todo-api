@@ -118,7 +118,6 @@ test.group('Tasks update', (group) => {
       status: response.status(),
     })
   })
-
   group.each.setup(async () => {
     await Database.beginGlobalTransaction()
     return () => Database.rollbackGlobalTransaction()
