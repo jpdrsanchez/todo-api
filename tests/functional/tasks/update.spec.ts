@@ -21,15 +21,24 @@ test.group('Tasks update', (group) => {
     assert.equal(task.title, 'Edited Task')
   })
 
-  test('It should update the task order, and reorder all tasks', async ({ client, assert }) => {
+  test('It should update the task order, and reorder all tasks by task current status', async ({
+    client,
+    assert,
+  }) => {
     await Task.query().delete()
     const user = await UserFactory.create()
     const [, , task] = await user.related('tasks').createMany(generateTasks(10))
+    await user.related('tasks').createMany(generateTasks(10, 'DONE'))
+
     let response = await client.put(`/api/tasks/${task.id}`).json({ order: 10 }).loginAs(user)
     await task.refresh()
     response.assertStatus(204)
 
-    let tasks = await user.related('tasks').query().orderBy('order', 'asc')
+    let tasks = await user
+      .related('tasks')
+      .query()
+      .where('status', task.status)
+      .orderBy('order', 'asc')
     assert.equal(tasks[9].order, task.order)
     assert.equal(tasks.filter((task) => task.order === 10).length, 1)
 
@@ -37,7 +46,7 @@ test.group('Tasks update', (group) => {
     await task.refresh()
     response.assertStatus(204)
 
-    tasks = await user.related('tasks').query().orderBy('order', 'asc')
+    tasks = await user.related('tasks').query().where('status', task.status).orderBy('order', 'asc')
     assert.equal(tasks[3].order, task.order)
     assert.equal(tasks.filter((task) => task.order === 4).length, 1)
 
@@ -45,7 +54,7 @@ test.group('Tasks update', (group) => {
     await task.refresh()
     response.assertStatus(204)
 
-    tasks = await user.related('tasks').query().orderBy('order', 'asc')
+    tasks = await user.related('tasks').query().where('status', task.status).orderBy('order', 'asc')
     assert.equal(tasks[4].order, task.order)
     assert.equal(tasks.filter((task) => task.order === 5).length, 1)
 
@@ -55,9 +64,49 @@ test.group('Tasks update', (group) => {
     await newTask.refresh()
     response.assertStatus(204)
 
-    tasks = await user.related('tasks').query().orderBy('order', 'asc')
+    tasks = await user.related('tasks').query().where('status', task.status).orderBy('order', 'asc')
     assert.equal(tasks[7].order, newTask.order)
     assert.equal(tasks.filter((task) => task.order === 8).length, 1)
+  })
+
+  test('It should move the task to the first position when we update the status and reorder all tasks of the two statuses', async ({
+    client,
+    assert,
+  }) => {
+    const user = await UserFactory.create()
+    const [, , todoTask] = await user.related('tasks').createMany(generateTasks(10))
+    const [, , , , doneTask] = await user.related('tasks').createMany(generateTasks(10, 'DONE'))
+
+    let response = await client
+      .put(`/api/tasks/${todoTask.id}`)
+      .json({ status: 'DONE' })
+      .loginAs(user)
+
+    await todoTask.refresh()
+    const doneTasks = await user
+      .related('tasks')
+      .query()
+      .where('status', todoTask.status)
+      .orderBy('order', 'asc')
+
+    response.assertStatus(204)
+    assert.equal(doneTasks.length, 11)
+    assert.equal(doneTasks[0].order, todoTask.order)
+    assert.equal(doneTasks.filter((task) => task.order === 1).length, 1)
+
+    response = await client.put(`/api/tasks/${doneTask.id}`).json({ status: 'TODO' }).loginAs(user)
+
+    await doneTask.refresh()
+    const todoTasks = await user
+      .related('tasks')
+      .query()
+      .where('status', todoTask.status)
+      .orderBy('order', 'asc')
+
+    response.assertStatus(204)
+    assert.equal(todoTasks.length, 10)
+    assert.equal(todoTasks[0].order, doneTask.order)
+    assert.equal(doneTasks.filter((task) => task.order === 1).length, 1)
   })
 
   test('It should return a validation error when title or order are outside the validation rules', async ({
@@ -118,6 +167,7 @@ test.group('Tasks update', (group) => {
       status: response.status(),
     })
   })
+
   group.each.setup(async () => {
     await Database.beginGlobalTransaction()
     return () => Database.rollbackGlobalTransaction()

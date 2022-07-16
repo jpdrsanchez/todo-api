@@ -66,7 +66,7 @@ test.group('Tasks delete', (group) => {
     const user = await UserFactory.create()
     await user.related('tasks').createMany(generateTasks(10))
 
-    const response = await client.delete('/api/tasks').loginAs(user)
+    const response = await client.delete('/api/tasks').json({ status: 'TODO' }).loginAs(user)
 
     response.assertStatus(204)
   })

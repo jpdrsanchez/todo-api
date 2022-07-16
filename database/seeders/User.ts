@@ -40,37 +40,37 @@ export default class extends BaseSeeder {
         {
           status: 'TODO',
           title: 'This item label may be edited',
-          order: 6,
+          order: 1,
         },
         {
           status: 'TODO',
           title: 'Checked item goes to Done list',
-          order: 7,
+          order: 2,
         },
         {
           status: 'TODO',
           title: 'Erase all',
-          order: 8,
+          order: 3,
         },
         {
           status: 'TODO',
           title: 'Delete itens',
-          order: 9,
+          order: 4,
         },
         {
           status: 'TODO',
           title: 'Add new tasks',
-          order: 10,
+          order: 5,
         },
         {
           status: 'TODO',
           title: 'Create the drag-and-drop function',
-          order: 11,
+          order: 6,
         },
         {
           status: 'TODO',
           title: 'Develop the To-do list page',
-          order: 12,
+          order: 7,
         },
       ])
     } catch (err) {

@@ -1,6 +1,7 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import Task from 'App/Models/Task'
 import CreateTaskValidator from 'App/Validators/CreateTaskValidator'
+import DetroyAllValidator from 'App/Validators/DetroyAllValidator'
 import UpdateTaskValidator from 'App/Validators/UpdateTaskValidator'
 
 export default class TasksController {
@@ -14,7 +15,12 @@ export default class TasksController {
   public async store(ctx: HttpContextContract) {
     const { title } = await ctx.request.validate(CreateTaskValidator)
     const user = ctx.auth.user!
-    const findTask = await user.related('tasks').query().orderBy('order', 'desc').first()
+    const findTask = await user
+      .related('tasks')
+      .query()
+      .where('status', 'TODO')
+      .orderBy('order', 'desc')
+      .first()
     let order: number
 
     if (!findTask) order = 0
@@ -52,18 +58,40 @@ export default class TasksController {
       await userTasks
         .query()
         .whereNotIn('id', [task.id])
+        .andWhere('status', task.status)
         .andWhere('order', '<', currentOrder)
         .increment('order', 1)
       await userTasks
         .query()
         .whereNotIn('id', [task.id])
+        .andWhere('status', task.status)
         .andWhere('order', '<=', inputs.order)
         .decrement('order', 1)
-    }
-
-    if (inputs.status) {
+    } else if (inputs.status) {
+      let order: number = 1
+      let currentStatus = task.status
+      let currentOrder = task.order
+      task.order = order
       task.status = inputs.status
       await task.save()
+
+      await userTasks
+        .query()
+        .whereNotIn('id', [task.id])
+        .andWhere('status', task.status)
+        .andWhere('order', '<', currentOrder)
+        .increment('order', 1)
+      await userTasks
+        .query()
+        .whereNotIn('id', [task.id])
+        .andWhere('status', task.status)
+        .andWhere('order', '<=', order)
+        .decrement('order', 1)
+      await userTasks
+        .query()
+        .where('order', '>=', currentOrder)
+        .andWhere('status', currentStatus)
+        .decrement('order', 1)
     }
 
     return ctx.response.noContent()
@@ -72,13 +100,23 @@ export default class TasksController {
   public async destroy(ctx: HttpContextContract) {
     const task = await Task.findOrFail(Number(ctx.params.id))
     await ctx.bouncer.authorize('taskAccess', task)
+    const taskStatus = task.status
+    const taskOrder = task.order
     await task.delete()
+
+    await ctx.auth
+      .user!.related('tasks')
+      .query()
+      .where('order', '>', taskOrder)
+      .andWhere('status', taskStatus)
+      .decrement('order', 1)
 
     return ctx.response.noContent()
   }
 
   public async destroyAll(ctx: HttpContextContract) {
-    await ctx.auth.user!.related('tasks').query().delete()
+    const inputs = await ctx.request.validate(DetroyAllValidator)
+    await ctx.auth.user!.related('tasks').query().where('status', inputs.status).delete()
 
     return ctx.response.noContent()
   }
