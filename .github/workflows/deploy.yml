@@ -17,14 +17,3 @@ jobs:
             cd /var/www/
             rm -rf todo-api
             git clone git@github.com:jpdrsanchez/todo-api.git
-            cd todo-api
-            npm install
-            node ace db:wipe
-            node ace migration:run
-            node ace db:seed
-            node ace build --production
-            cd build
-            npm ci --production
-            cd ..
-            cd ..
-            pm2 start ecosystem.config.js
