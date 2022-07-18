@@ -14,7 +14,6 @@ jobs:
           host: ${{ secrets.HOST }}
           key: ${{ secrets.SSH_KEY }}
           username: ${{ secrets.SSH_USERNAME }}
-          source: '/'
           target: 'testing'
       - name: executing remote ssh commands
         uses: appleboy/ssh-action@master
