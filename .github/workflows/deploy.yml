@@ -11,9 +11,10 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
-          password: ${{ secrets.SSH_PASS }}
+          key: ${{ secrets.SSH_KEY }}
           username: ${{ secrets.SSH_USERNAME }}
           script: |
             cd /var/www/
             rm -rf todo-api
             git clone git@github.com:jpdrsanchez/todo-api.git
+            yarn
