@@ -33,11 +33,7 @@ O Login pode ser realizado tanto com o e-mail `contato@jotape.tech` quanto com o
     "created_at": "2022-07-18T01:15:41.000+00:00",
     "updated_at": "2022-07-18T01:15:41.000+00:00"
   },
-  "token": {
-    "type": "bearer",
-    "token": "Y2w1cXZhcDJuMDAwMTcxcnUyamYyZGN5OQ.qfMaWdOnAq88AD1nXWVGWPH6f01qT-T1uHkBijXTkTU1ws7muBpgTphXvwIg",
-    "expires_at": "2022-07-18T15:54:05.422+00:00"
-  }
+  "token": "Y2w1cXZhcDJuMDAwMTcxcnUyamYyZGN5OQ.qfMaWdOnAq88AD1nXWVGWPH6f01qT-T1uHkBijXTkTU1ws7muBpgTphXvwIg"
 }
 ```
 
@@ -59,6 +55,27 @@ O Login pode ser realizado tanto com o e-mail `contato@jotape.tech` quanto com o
 
 ```json
 
+```
+
+`401 Unauthorized` Quando o usuário não está autenticado
+
+```json
+{
+  "code": "UNAUTHORIZED_ACCESS",
+  "message": "Unauthorized Access",
+  "status": 401
+}
+```
+
+`POST` auth/me
+
+`200 OK`
+
+```json
+{
+  "username": "jotape",
+  "email": "contato@jotape.tech"
+}
 ```
 
 `401 Unauthorized` Quando o usuário não está autenticado

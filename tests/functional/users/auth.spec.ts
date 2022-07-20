@@ -87,6 +87,17 @@ test.group('User Authentication', (group) => {
     })
   })
 
+  test('It should return user informations', async ({ client }) => {
+    const user = await UserFactory.create()
+    const response = await client.get('/api/auth/me').loginAs(user)
+
+    response.assertStatus(200)
+    response.assertBody({
+      username: user.username,
+      email: user.email,
+    })
+  })
+
   group.each.setup(async () => {
     await Database.beginGlobalTransaction()
     return () => Database.rollbackGlobalTransaction()
