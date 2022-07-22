@@ -74,38 +74,77 @@ test.group('Tasks update', (group) => {
     assert,
   }) => {
     const user = await UserFactory.create()
-    const [, , todoTask] = await user.related('tasks').createMany(generateTasks(10))
-    const [, , , , doneTask] = await user.related('tasks').createMany(generateTasks(10, 'DONE'))
+    const [todoTaskOne, , todoTaskThree] = await user.related('tasks').createMany(generateTasks(10))
+    const [, doneTaskTwo, , , doneTaskFive] = await user
+      .related('tasks')
+      .createMany(generateTasks(10, 'DONE'))
 
     let response = await client
-      .put(`/api/tasks/${todoTask.id}`)
+      .put(`/api/tasks/${todoTaskOne.id}`)
       .json({ status: 'DONE' })
       .loginAs(user)
 
-    await todoTask.refresh()
-    const doneTasks = await user
+    await todoTaskOne.refresh()
+    let doneTasks = await user
       .related('tasks')
       .query()
-      .where('status', todoTask.status)
+      .where('status', todoTaskOne.status)
       .orderBy('order', 'asc')
 
     response.assertStatus(204)
     assert.equal(doneTasks.length, 11)
-    assert.equal(doneTasks[0].order, todoTask.order)
+    assert.equal(doneTasks[0].order, todoTaskOne.order)
     assert.equal(doneTasks.filter((task) => task.order === 1).length, 1)
 
-    response = await client.put(`/api/tasks/${doneTask.id}`).json({ status: 'TODO' }).loginAs(user)
+    response = await client
+      .put(`/api/tasks/${doneTaskFive.id}`)
+      .json({ status: 'TODO' })
+      .loginAs(user)
 
-    await doneTask.refresh()
-    const todoTasks = await user
+    await doneTaskFive.refresh()
+    let todoTasks = await user
       .related('tasks')
       .query()
-      .where('status', todoTask.status)
+      .where('status', todoTaskOne.status)
       .orderBy('order', 'asc')
 
     response.assertStatus(204)
     assert.equal(todoTasks.length, 10)
-    assert.equal(todoTasks[0].order, doneTask.order)
+    assert.equal(todoTasks[0].order, doneTaskFive.order)
+    assert.equal(doneTasks.filter((task) => task.order === 1).length, 1)
+
+    response = await client
+      .put(`/api/tasks/${todoTaskThree.id}`)
+      .json({ status: 'DONE' })
+      .loginAs(user)
+
+    await todoTaskThree.refresh()
+    doneTasks = await user
+      .related('tasks')
+      .query()
+      .where('status', todoTaskThree.status)
+      .orderBy('order', 'asc')
+
+    response.assertStatus(204)
+    assert.equal(doneTasks.length, 11)
+    assert.equal(doneTasks[0].order, todoTaskThree.order)
+    assert.equal(doneTasks.filter((task) => task.order === 1).length, 1)
+
+    response = await client
+      .put(`/api/tasks/${doneTaskTwo.id}`)
+      .json({ status: 'TODO' })
+      .loginAs(user)
+
+    await doneTaskTwo.refresh()
+    todoTasks = await user
+      .related('tasks')
+      .query()
+      .where('status', todoTaskThree.status)
+      .orderBy('order', 'asc')
+
+    response.assertStatus(204)
+    assert.equal(todoTasks.length, 10)
+    assert.equal(todoTasks[0].order, doneTaskTwo.order)
     assert.equal(doneTasks.filter((task) => task.order === 1).length, 1)
   })
 

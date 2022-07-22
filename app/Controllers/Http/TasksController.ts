@@ -74,19 +74,14 @@ export default class TasksController {
       task.order = order
       task.status = inputs.status
       await task.save()
+      await task.refresh()
 
       await userTasks
         .query()
         .whereNotIn('id', [task.id])
         .andWhere('status', task.status)
-        .andWhere('order', '<', currentOrder)
+        .andWhere('order', '>=', order)
         .increment('order', 1)
-      await userTasks
-        .query()
-        .whereNotIn('id', [task.id])
-        .andWhere('status', task.status)
-        .andWhere('order', '<=', order)
-        .decrement('order', 1)
       await userTasks
         .query()
         .where('order', '>=', currentOrder)
